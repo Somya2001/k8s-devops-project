@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Validate K8s Manifests
+      run: |
+        kubectl apply --dry-run=client -f k8s/
+        echo "✅ All manifests are valid!"
+
+    - name: Deployment Summary
+      run: |
+        echo "========================================="
+        echo "  Deployment Summary"
+        echo "========================================="
+        echo "  App Image  : nginxdemos/hello"
+        echo "  Redis Image: redis:7-alpine"
+        echo "  Replicas   : 2"
+        echo "  Probes     : Liveness + Readiness"
+        echo "========================================="
+        echo "  In production this would:"
+        echo "  1. Connect to real K8s cluster"
+        echo "  2. kubectl apply -f k8s/"
+        echo "  3. kubectl rollout status deployment/myapp"
+        echo "========================================="

@@ -1,0 +1,59 @@
+# ========================================
+# REDIS DEPLOYMENT
+# ========================================
+# What is this?
+# Redis is an in-memory database
+# We use it as our "service dependency"
+# which is required by the assessment
+# ========================================
+
+apiVersion: apps/v1      # Which K8s API version to use
+kind: Deployment         # Type of K8s object we're creating
+metadata:
+  name: redis            # Name of this deployment
+  labels:
+    app: redis           # Label to identify this deployment
+spec:
+  replicas: 1            # Run 1 copy of Redis
+  selector:
+    matchLabels:
+      app: redis         # Manage pods with this label
+  template:
+    metadata:
+      labels:
+        app: redis       # Label applied to pods
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine   # Official Redis image (alpine = small size)
+        ports:
+        - containerPort: 6379   # Redis default port
+        resources:
+          requests:             # Minimum resources needed
+            memory: "64Mi"      # 64 Megabytes RAM
+            cpu: "50m"          # 50 millicores (0.05 CPU)
+          limits:               # Maximum resources allowed
+            memory: "128Mi"
+            cpu: "100m"
+
+---
+# ========================================
+# REDIS SERVICE
+# ========================================
+# What is this?
+# A Service gives Redis a stable hostname
+# Without this, pods talk by IP which
+# changes every time pod restarts
+# ========================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service    # This becomes the hostname inside K8s
+spec:
+  selector:
+    app: redis           # Route traffic to pods labeled app=redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP        # Internal only, not exposed outside cluster

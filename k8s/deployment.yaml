@@ -1,0 +1,78 @@
+# ========================================
+# MAIN APP DEPLOYMENT
+# ========================================
+# We use nginxdemos/hello image
+# It shows: hostname, IP, request details
+# Perfect for showing load balancing!
+# ========================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 2            # Run 2 pods for high availability
+  selector:
+    matchLabels:
+      app: myapp
+  
+  # Rolling update strategy
+  # Updates pods one by one = zero downtime
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Allow 1 extra pod during update
+      maxUnavailable: 0  # Never kill pod before new one is ready
+
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: nginxdemos/hello    # Public demo image - no need to build!
+        ports:
+        - containerPort: 80        # nginx runs on port 80
+
+        # ========================================
+        # LIVENESS PROBE
+        # ========================================
+        # Question: "Is the container alive?"
+        # If NO → Kubernetes RESTARTS the container
+        # Like a heartbeat check
+        # ========================================
+        livenessProbe:
+          httpGet:
+            path: /         # Hit this endpoint
+            port: 80
+          initialDelaySeconds: 10   # Wait 10s after start
+          periodSeconds: 15         # Check every 15 seconds
+          failureThreshold: 3       # Restart after 3 failures
+
+        # ========================================
+        # READINESS PROBE
+        # ========================================
+        # Question: "Is container ready for traffic?"
+        # If NO → Remove from load balancer (don't restart)
+        # Like asking "are you ready to take customers?"
+        # ========================================
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5    # Check sooner than liveness
+          periodSeconds: 10
+          failureThreshold: 3
+
+        # Always set resource limits!
+        # Prevents one pod from consuming all cluster resources
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"

@@ -1,0 +1,19 @@
+# ========================================
+# APP SERVICE
+# ========================================
+# Exposes our app to the outside world
+# NodePort = accessible from our laptop
+# ========================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp           # Route traffic to pods labeled app=myapp
+  ports:
+  - port: 80             # Service port
+    targetPort: 80       # Container port
+    nodePort: 30080      # Port on Minikube node (access from laptop)
+  type: NodePort         # Exposes service on minikube IP
