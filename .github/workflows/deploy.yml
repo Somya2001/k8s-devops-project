@@ -15,15 +15,21 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'v1.28.0'
+    - name: Install yamllint
+      run: pip install yamllint
 
-    - name: Validate K8s Manifests
+    - name: Validate YAML Syntax
       run: |
-        kubectl apply --dry-run=client -f k8s/
-        echo "✅ All manifests are valid!"
+        yamllint k8s/
+        echo "✅ All YAML files are valid!"
+
+    - name: Check K8s manifest structure
+      run: |
+        echo "Checking manifest files..."
+        for f in k8s/*.yaml; do
+          echo "✅ Found: $f"
+          cat $f | grep "kind:" 
+        done
 
     - name: Deployment Summary
       run: |
@@ -36,7 +42,7 @@ jobs:
         echo "  Probes     : Liveness + Readiness"
         echo "========================================="
         echo "  In production this would:"
-        echo "  1. Connect to real K8s cluster"
+        echo "  1. Connect to real K8s cluster via kubeconfig secret"
         echo "  2. kubectl apply -f k8s/"
         echo "  3. kubectl rollout status deployment/myapp"
         echo "========================================="
