@@ -1,4 +1,4 @@
-# K8s DevOps Assessment
+# K8s DevOps Project
 
 ## Stack
 - **App**: nginxdemos/hello (public demo image)
